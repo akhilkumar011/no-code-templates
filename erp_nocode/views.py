@@ -1,11 +1,17 @@
 from django.http import JsonResponse,HttpResponse
-from django.shortcuts import render ,redirect
+from django.shortcuts import render ,redirect,get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
-from .models import Business, CustomField,DESIGN_NAMES
+from .models import Business, CustomField
 import json
 import uuid
 from datetime import datetime
 from bson import ObjectId
+from pymongo import MongoClient
+from django.urls import reverse
+
+
+client = MongoClient('localhost', 27017)
+db = client['Hb_ERP_Utility']
 
 @csrf_exempt
 def create_business(request):
@@ -109,18 +115,44 @@ def edit_module(request, module_id):
 
     return render(request, 'edit_module.html', {'module': module})
 
+
 def create_module_entry(request, module_id):
-    module = get_object_or_404(CustomField, id=module_id)
+    try:
+        module_object_id = ObjectId(module_id)
+    except Exception as e:
+        return HttpResponse("Invalid module ID", status=400)
+    
+    pipeline = [
+        {'$match': {'_id': module_object_id}}
+    ]
+    modules = list(CustomField().aggregate_raw(pipeline))
+    
+    if not modules:
+        return HttpResponse("Module not found", status=404)
+
+    module = modules[0]
+    if '_id' in module:
+        module['id'] = str(module.pop('_id'))
+
+    # Ensuring dynamicFields is accessed correctly from the module dictionary
+    dynamic_fields = module.get('dynamicFields', [])
 
     if request.method == 'POST':
         module_data = {}
-        for field in module.dynamicFields:
-            field_name = field['name']
+        for field in dynamic_fields:
+            field_name = field.get('name')
+            field_type = field.get('type')
             field_value = request.POST.get(field_name)
+
+            if field_type == 'number':
+                try:
+                    field_value = float(field_value)
+                except ValueError:
+                    return HttpResponse(f"Invalid input for field {field_name}: expected a number.", status=400)
+
             module_data[field_name] = field_value
         
-        # Save the data to the collection named after the module
-        db[module.module].insert_one(module_data)
+        db[module['module']].insert_one(module_data)
         return redirect('show_modules')
 
-    return render(request, 'create_module_entry.html', {'module': module})
+    return render(request, 'create_module_entry.html', {'module': module, 'dynamicFields': dynamic_fields})

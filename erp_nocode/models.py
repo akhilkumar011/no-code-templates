@@ -6,13 +6,6 @@ from bson import ObjectId
 from util.erp_utility_collection import MAIN_COLLECTION
 from util.mongo_orm.models import BaseModel
 
-DESIGN_NAMES = {
-    "HADR": {"description": "Header", "template_path": "designs/header.html"},
-    "BTN": {"description": "Button", "template_path": "designs/button.html"},
-    "INFD": {"description": "Input Field", "template_path": "designs/input_field.html"},
-    "CHKB": {"description": "Check Box", "template_path": "designs/check_box.html"},
-}
-
 @dataclass
 class Business(BaseModel):
     _id: ObjectId = field(default_factory=ObjectId)
