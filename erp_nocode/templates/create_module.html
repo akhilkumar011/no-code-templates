@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Module</title>
+    <script>
+        function addModule() {
+            let moduleTitle = document.getElementById('module_input').value;
+            if (!moduleTitle) {
+                alert('Module title is required.');
+                return;
+            }
+
+            let moduleContainer = document.getElementById('module-container');
+            moduleContainer.innerHTML = ''; // Clear any existing module
+
+            let module = document.createElement('h1');
+            module.innerText = moduleTitle;
+            moduleContainer.appendChild(module);
+
+            // Store module title in hidden input to submit with form
+            document.getElementById('module-title-input').value = moduleTitle;
+
+            // Hide the add module input and button after adding the module
+            document.getElementById('add-module-div').style.display = 'none';
+        }
+
+        function addField() {
+            let fieldContainer = document.getElementById('dynamic-fields');
+            let fieldCount = fieldContainer.children.length;
+
+            let fieldDiv = document.createElement('div');
+            fieldDiv.classList.add('dynamic-field');
+
+            let nameLabel = document.createElement('label');
+            nameLabel.innerText = 'Field Name';
+            let nameInput = document.createElement('input');
+            nameInput.type = 'text';
+            nameInput.name = `dynamic_field_${fieldCount}_name`;
+
+            let typeLabel = document.createElement('label');
+            typeLabel.innerText = 'Field Type';
+            let typeSelect = document.createElement('select');
+            typeSelect.name = `dynamic_field_${fieldCount}_type`;
+            let textOption = document.createElement('option');
+            textOption.value = 'text';
+            textOption.innerText = 'Text';
+            let numberOption = document.createElement('option');
+            numberOption.value = 'number';
+            numberOption.innerText = 'Number';
+            typeSelect.appendChild(textOption);
+            typeSelect.appendChild(numberOption);
+
+            let valueLabel = document.createElement('label');
+            valueLabel.innerText = 'Field Value';
+            let valueInput = document.createElement('input');
+            valueInput.type = 'text';
+            valueInput.name = `dynamic_field_${fieldCount}_value`;
+
+            fieldDiv.appendChild(nameLabel);
+            fieldDiv.appendChild(nameInput);
+            fieldDiv.appendChild(typeLabel);
+            fieldDiv.appendChild(typeSelect);
+            fieldDiv.appendChild(valueLabel);
+            fieldDiv.appendChild(valueInput);
+
+            fieldContainer.appendChild(fieldDiv);
+        }
+
+        function showAllModules() {
+            window.location.href = '{% url "show_modules" %}';
+        }
+    </script>
+</head>
+<body>
+    <div id="module-container"></div>
+    <div id="add-module-div">
+        <label for="module_input">Module Title:</label>
+        <input type="text" id="module_input">
+        <button type="button" onclick="addModule()">Add Module</button>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <input type="hidden" id="module-title-input" name="module_title">
+
+        <h3>Dynamic Fields</h3>
+        <div id="dynamic-fields"></div>
+        <button type="button" onclick="addField()">Add Field</button>
+
+        <button type="submit">Submit</button>
+    </form>
+
+    <button type="button" onclick="showAllModules()">Show All Modules</button>
+</body>
+</html>
