@@ -25,6 +25,7 @@
             <td>{{ module.module }}</td>
             <td>
                 <a href="{% url 'edit_module' module.id %}">Edit</a>
+                <a href="{% url 'create_module_entry' module.id %}">Create Entry</a>
             </td>
         </tr>
         {% endfor %}

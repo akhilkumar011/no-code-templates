@@ -4,9 +4,6 @@ from django.views.decorators.csrf import csrf_exempt
 from .models import Business, CustomField,DESIGN_NAMES
 import json
 import uuid
-import os
-from django.template.loader import render_to_string,get_template
-from django.template import Engine, Context
 from datetime import datetime
 from bson import ObjectId
 
@@ -27,9 +24,8 @@ def create_module(request):
     if request.method == 'POST':
         module_title = request.POST.get('module_title')
         if not module_title:
-            return render(request, 'leads/create_module.html', {'error': 'Module title is required'})
+            return render(request, 'create_module.html', {'error': 'Module title is required'})
 
-        # Handling dynamic fields
         dynamic_fields = []
         dynamic_field_keys = [key for key in request.POST.keys() if key.startswith('dynamic_field')]
         field_pairs = set('_'.join(field.split('_')[:3]) for field in dynamic_field_keys)
@@ -37,12 +33,10 @@ def create_module(request):
         for pair in field_pairs:
             field_name = request.POST.get(f'{pair}_name')
             field_type = request.POST.get(f'{pair}_type')
-            field_value = request.POST.get(f'{pair}_value')
 
             field_entry = {
                 'name': field_name,
-                'type': field_type,
-                'value': field_value
+                'type': field_type
             }
             dynamic_fields.append(field_entry)
 
@@ -63,59 +57,15 @@ def show_modules(request):
     for module in modules:
         if '_id' in module:
             module['id'] = str(module.pop('_id'))
-    print(modules,">>>>>>>>>>")
     return render(request, 'show_modules.html', {'modules': modules})
 
-# def edit_module(request):
-#     pipeline = []
-#     modules = list(CustomField().aggregate_raw(pipeline))
-#     for module in modules:
-#         if '_id' in module:
-#             module['id'] = str(module.pop('_id'))
-
-#     if request.method == 'POST':
-#         module_title = request.POST.get('module_title')
-#         module_id = request.POST.get('id')
-#         if not module_title:
-#             return render(request, 'edit_module.html', {'module': modules, 'error': 'Module title is required'})
-
-#         dynamic_fields = []
-#         dynamic_field_keys = [key for key in request.POST.keys() if key.startswith('dynamic_field')]
-#         field_pairs = set('_'.join(field.split('_')[:3]) for field in dynamic_field_keys)
-
-#         for pair in field_pairs:
-#             field_name = request.POST.get(f'{pair}_name')
-#             field_type = request.POST.get(f'{pair}_type')
-#             field_value = request.POST.get(f'{pair}_value')
-
-#             field_entry = {
-#                 'name': field_name,
-#                 'type': field_type,
-#                 'value': field_value
-#             }
-#             dynamic_fields.append(field_entry)
-
-#         # Update data using CustomField
-#         CustomField().update_one(
-#             {'_id': module_id},
-#             {'$set': {
-#                 'module': module_title,
-#                 'dynamicFields': dynamic_fields,
-#                 'createdAt': datetime.now()
-#             }}
-#         )
-#         return redirect('show_modules')
-
-#     return render(request, 'edit_module.html', {'module': modules})
 
 def edit_module(request, module_id):
-    # Convert the string module_id to an ObjectId
     try:
         module_object_id = ObjectId(module_id)
     except Exception as e:
         return HttpResponse("Invalid module ID", status=400)
     
-    # Create the aggregation pipeline with a match condition
     pipeline = [
         {'$match': {'_id': module_object_id}}
     ]
@@ -124,7 +74,6 @@ def edit_module(request, module_id):
     if not modules:
         return HttpResponse("Module not found", status=404)
     
-    # Assume the first document is the one we want (since _id should be unique)
     module = modules[0]
     if '_id' in module:
         module['id'] = str(module.pop('_id'))
@@ -132,7 +81,7 @@ def edit_module(request, module_id):
     if request.method == 'POST':
         module_title = request.POST.get('module_title')
         if not module_title:
-            return render(request, 'leads/edit_module.html', {'module': module, 'error': 'Module title is required'})
+            return render(request, 'edit_module.html', {'module': module, 'error': 'Module title is required'})
 
         dynamic_fields = []
         dynamic_field_keys = [key for key in request.POST.keys() if key.startswith('dynamic_field')]
@@ -141,12 +90,10 @@ def edit_module(request, module_id):
         for pair in field_pairs:
             field_name = request.POST.get(f'{pair}_name')
             field_type = request.POST.get(f'{pair}_type')
-            field_value = request.POST.get(f'{pair}_value')
 
             field_entry = {
                 'name': field_name,
                 'type': field_type,
-                'value': field_value
             }
             dynamic_fields.append(field_entry)
 
@@ -161,3 +108,19 @@ def edit_module(request, module_id):
         return redirect('show_modules')
 
     return render(request, 'edit_module.html', {'module': module})
+
+def create_module_entry(request, module_id):
+    module = get_object_or_404(CustomField, id=module_id)
+
+    if request.method == 'POST':
+        module_data = {}
+        for field in module.dynamicFields:
+            field_name = field['name']
+            field_value = request.POST.get(field_name)
+            module_data[field_name] = field_value
+        
+        # Save the data to the collection named after the module
+        db[module.module].insert_one(module_data)
+        return redirect('show_modules')
+
+    return render(request, 'create_module_entry.html', {'module': module})

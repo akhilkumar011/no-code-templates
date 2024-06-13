@@ -2,6 +2,14 @@
 <html>
 <head>
     <title>Create Module</title>
+    <style>
+        .delete-button {
+            cursor: pointer;
+            color: red;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+    </style>
     <script>
         function addModule() {
             let moduleTitle = document.getElementById('module_input').value;
@@ -11,7 +19,7 @@
             }
 
             let moduleContainer = document.getElementById('module-container');
-            moduleContainer.innerHTML = ''; // Clear any existing module
+            moduleContainer.innerHTML = '';
 
             let module = document.createElement('h1');
             module.innerText = moduleTitle;
@@ -50,20 +58,24 @@
             typeSelect.appendChild(textOption);
             typeSelect.appendChild(numberOption);
 
-            let valueLabel = document.createElement('label');
-            valueLabel.innerText = 'Field Value';
-            let valueInput = document.createElement('input');
-            valueInput.type = 'text';
-            valueInput.name = `dynamic_field_${fieldCount}_value`;
+            let deleteButton = document.createElement('span');
+            deleteButton.classList.add('delete-button');
+            deleteButton.innerText = '✖';
+            deleteButton.onclick = function() {
+                fieldDiv.remove();
+            };
 
             fieldDiv.appendChild(nameLabel);
             fieldDiv.appendChild(nameInput);
             fieldDiv.appendChild(typeLabel);
             fieldDiv.appendChild(typeSelect);
-            fieldDiv.appendChild(valueLabel);
-            fieldDiv.appendChild(valueInput);
+            fieldDiv.appendChild(deleteButton);
 
             fieldContainer.appendChild(fieldDiv);
+        }
+
+        function deleteField(element) {
+            element.parentElement.remove();
         }
 
         function showAllModules() {

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Module Entry</title>
+</head>
+<body>
+    <h1>Create Entry for {{ module.module }}</h1>
+    <form method="post">
+        {% csrf_token %}
+        {% for field in module.dynamicFields %}
+        <div>
+            <label for="{{ field.name }}">{{ field.name }}</label>
+            {% if field.type == 'text' %}
+            <input type="text" id="{{ field.name }}" name="{{ field.name }}">
+            {% elif field.type == 'number' %}
+            <input type="number" id="{{ field.name }}" name="{{ field.name }}">
+            {% endif %}
+        </div>
+        {% endfor %}
+        <button type="submit">Save</button>
+    </form>
+    <a href="{% url 'show_modules' %}">Back to Modules</a>
+</body>
+</html>
