@@ -17,7 +17,6 @@ from django.urls import path, include
 
 urlpatterns = [
     path('api/', include('api.urls')),
-    # path("web/", include("web.urls")),
     path("erp/", include("erp_nocode.urls")),
 ]
 
